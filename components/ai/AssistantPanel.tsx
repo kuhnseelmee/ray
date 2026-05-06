@@ -1,0 +1,112 @@
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { AssistantMessageList } from './AssistantMessageList'
+import { AssistantInput } from './AssistantInput'
+import { Button } from '@/components/ui/Button'
+import { ChatMessage, ChatResponse } from '@/lib/ai/types'
+
+interface AssistantPanelProps {
+  isOpen: boolean
+  onClose: () => void
+  pageContext?: string
+  serviceSlug?: string
+  portfolioSlug?: string
+}
+
+const INITIAL_MESSAGE: ChatMessage = {
+  role: 'assistant',
+  content: "Hi, I'm Frank. I'm here to help you understand what Ray can do for you. Ask me about his services, your technical problems, or how to get started.",
+}
+
+export function AssistantPanel({
+  isOpen,
+  onClose,
+  pageContext,
+  serviceSlug,
+  portfolioSlug,
+}: AssistantPanelProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, isOpen])
+
+  const handleSendMessage = async (message: string) => {
+    const userMessage: ChatMessage = { role: 'user', content: message }
+    setMessages(prev => [...prev, userMessage])
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          pageContext,
+          serviceSlug,
+          portfolioSlug,
+          history: messages,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get response')
+      }
+
+      const data: ChatResponse = await response.json()
+
+      const assistantMessage: ChatMessage = { role: 'assistant', content: data.reply }
+      setMessages(prev => [...prev, assistantMessage])
+    } catch (err) {
+      setError("I'm having trouble responding right now. Please try again or contact Ray directly.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed bottom-20 right-6 z-50 w-full max-w-md bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-dark text-white">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span className="font-medium">Frank</span>
+          <span className="text-xs text-gray-400">AI Assistant</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 hover:bg-gray-700 rounded"
+          aria-label="Close assistant"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="h-80 overflow-y-auto p-4 bg-gray-50">
+        <AssistantMessageList messages={messages} isLoading={isLoading} />
+        {error && (
+          <div className="mt-2 p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="p-4 border-t border-gray-200">
+        <AssistantInput onSend={handleSendMessage} isLoading={isLoading} />
+      </div>
+    </div>
+  )
+}
