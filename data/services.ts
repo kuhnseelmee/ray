@@ -155,6 +155,31 @@ export const services: Service[] = [
       label: 'Plan an AI workflow',
       href: '/contact?service=ai-assisted-business'
     }
+  },
+  {
+    id: 'ndis-roi-calculator',
+    title: 'ACC ROI Calculator for NDIS Providers',
+    shortTitle: 'ROI Calculator',
+    problem: 'NDIS providers often know a system change feels worthwhile, but they still need a clear business case showing where the savings come from and how the investment pays back.',
+    solution: 'I build a practical ROI calculator that estimates admin savings, missed-shift savings, incident reduction, and compliance risk reduction so decision-makers can see the financial impact before committing.',
+    deliverables: [
+      'ROI model based on participant count, admin load, missed shifts, and incident frequency',
+      'Spreadsheet or web-based calculator',
+      'Scenario comparisons for conservative, expected, and best-case assumptions',
+      'Plain-language summary for stakeholders and approvals'
+    ],
+    outcomes: [
+      'Clearer business case for NDIS operations investment',
+      'Faster decisions on whether a system or workflow is worth funding',
+      'Better visibility into where savings are likely to come from',
+      'More confidence when presenting the proposal to managers or directors'
+    ],
+    relatedSkills: ['backend-databases-apis', 'automation-ai', 'business-property-operations'],
+    relatedProjects: ['amma-care-connect'],
+    cta: {
+      label: 'Estimate ROI',
+      href: '#ndis-roi-calculator'
+    }
   }
 ]
 

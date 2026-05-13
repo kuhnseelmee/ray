@@ -11,3 +11,8 @@ body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
 }
+
+body.theme-dark {
+  --foreground-rgb: 229, 231, 235;
+  --background-rgb: 3, 7, 18;
+}

@@ -1,12 +1,111 @@
-version: '3.8'
-
 services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.web.http.redirections.entryPoint.permanent=true
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - ray-network
+
+  postgres:
+    image: postgres:16-alpine
+    expose:
+      - '5432'
+    environment:
+      POSTGRES_USER: ray
+      POSTGRES_PASSWORD: ray_password
+      POSTGRES_DB: ray_portfolio
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ray -d ray_portfolio']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ray-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11535:11535'
+    networks:
+      - ray-network
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11535
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    environment:
+      - N8N_PORT=8000
+      - N8N_HOST=0.0.0.0
+      - N8N_PROTOCOL=http
+      - N8N_EDITOR_BASE_URL=https://n8n.localhost
+      - WEBHOOK_URL=https://n8n.localhost/
+    volumes:
+      - n8n-data:/home/node/.n8n
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`n8n.localhost`)
+      - traefik.http.routers.n8n.entrypoints=websecure
+      - traefik.http.routers.n8n.tls=true
+      - traefik.http.services.n8n.loadbalancer.server.port=8000
+    restart: unless-stopped
+    networks:
+      - ray-network
+
   web:
     build: .
-    ports:
-      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      n8n:
+        condition: service_started
     environment:
       - NODE_ENV=production
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_PROVIDER=${AI_PROVIDER:-openai}
+      - AI_TIMEOUT_MS=${AI_TIMEOUT_MS:-20000}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11535}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1}
       - NEXT_PUBLIC_ENABLE_AI=${NEXT_PUBLIC_ENABLE_AI:-true}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://ray:ray_password@postgres:5432/ray_portfolio}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-${ADMIN_PASSWORD}}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ray-web.rule=Host(`localhost`)
+      - traefik.http.routers.ray-web.entrypoints=websecure
+      - traefik.http.routers.ray-web.tls=true
+      - traefik.http.services.ray-web.loadbalancer.server.port=4000
     restart: unless-stopped
+    networks:
+      - ray-network
+
+networks:
+  ray-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  ollama-data:
+  n8n-data:

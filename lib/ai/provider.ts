@@ -1,4 +1,5 @@
 import { AiProvider } from './types'
+import { aiConfig } from './config'
 
 export class OpenAIProvider implements AiProvider {
   private apiKey: string;
@@ -31,7 +32,7 @@ export class OpenAIProvider implements AiProvider {
         temperature: input.temperature ?? 0.7,
         max_tokens: input.maxTokens ?? 500,
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(aiConfig.timeoutMs),
     })
 
     if (!response.ok) {
@@ -73,7 +74,7 @@ export class OllamaProvider implements AiProvider {
           num_predict: input.maxTokens ?? 500,
         },
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(aiConfig.timeoutMs),
     })
 
     if (!response.ok) {
@@ -105,4 +106,17 @@ export function isProviderConfigured(): boolean {
   }
   
   return true
+}
+
+export function isOllamaConfigured(): boolean {
+  return !!process.env.OLLAMA_BASE_URL || process.env.AI_PROVIDER === 'ollama'
+}
+
+export function isQuotaError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const message = error.message.toLowerCase()
+  return message.includes('429') && message.includes('insufficient_quota')
 }

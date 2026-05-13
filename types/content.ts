@@ -10,7 +10,8 @@ export type ServiceId =
   | "it-support-consulting"
   | "cybersecurity-awareness"
   | "data-optimisation"
-  | "ai-assisted-business";
+  | "ai-assisted-business"
+  | "ndis-roi-calculator";
 
 export type SkillCategoryId = 
   | "systems-architecture"
