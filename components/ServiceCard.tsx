@@ -8,7 +8,7 @@ interface ServiceCardProps {
 
 export function ServiceCard({ service, showRelatedProjects = false }: ServiceCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
+    <div id={service.id} className="scroll-mt-24 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all">
       <div className="p-6">
         <h3 className="text-xl font-bold text-dark mb-2">
           {service.title}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useEffect, useState, FormEvent } from 'react'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -15,12 +15,29 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
     name: '',
     email: '',
     company: '',
+    service: '',
     message: '',
   })
   const [classified, setClassified] = useState<IntakeResponse | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null)
+  const hasPrefilledContext = Boolean(formData.service || formData.message)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const service = params.get('service')
+    const message = params.get('message')
+
+    if (service || message) {
+      setFormData(prev => ({
+        ...prev,
+        service: service || prev.service,
+        message: message || prev.message,
+      }))
+    }
+  }, [])
 
   const analyzeMessage = async () => {
     if (!formData.message.trim()) return
@@ -35,8 +52,8 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
 
       if (response.ok) {
         const data = await response.json()
-        setClassified(data)
-        setShowSummary(true)
+      setClassified(data)
+      setShowSummary(true)
       }
     } catch (error) {
       console.error('Analysis error:', error)
@@ -48,17 +65,38 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setSubmitStatus(null)
 
-    await new Promise(resolve => setTimeout(resolve, 500))
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
 
-    setIsSubmitting(false)
-    onSubmitSuccess?.()
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to send message')
+      }
+
+      setSubmitStatus('Message saved. I will review it and get back to you.')
+      onSubmitSuccess?.()
+      setFormData({ name: '', email: '', company: '', service: '', message: '' })
+      setClassified(null)
+      setShowSummary(false)
+    } catch (error) {
+      setSubmitStatus(error instanceof Error ? error.message : 'Failed to send message')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const resetForm = () => {
     setClassified(null)
     setShowSummary(false)
-    setFormData({ name: '', email: '', company: '', message: '' })
+    setSubmitStatus(null)
+    setFormData({ name: '', email: '', company: '', service: '', message: '' })
   }
 
   return (
@@ -66,6 +104,39 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
       <CardContent>
         {!showSummary ? (
           <form onSubmit={handleSubmit} className="space-y-4">
+            {submitStatus && (
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                {submitStatus}
+              </div>
+            )}
+            {hasPrefilledContext && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700">
+                  Review before sending
+                </p>
+                <h3 className="mt-2 text-lg font-bold text-amber-950">
+                  Your ROI summary has been prefilled
+                </h3>
+                <p className="mt-2 text-sm text-amber-900">
+                  Check the service and message below. If anything looks off, edit it before sending.
+                </p>
+                <div className="mt-4 space-y-3 rounded-xl bg-white/80 p-4 text-sm text-gray-700">
+                  {formData.service && (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Service</p>
+                      <p className="mt-1 font-medium text-gray-900">{formData.service}</p>
+                    </div>
+                  )}
+                  {formData.message && (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Prefilled summary</p>
+                      <pre className="mt-1 whitespace-pre-wrap text-sm leading-6 text-gray-700">{formData.message}</pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <Input
               label="Your name"
               name="name"
@@ -90,6 +161,13 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
               value={formData.company}
               onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
             />
+            <Input
+              label="Service interest (optional)"
+              name="service"
+              placeholder="What are you enquiring about?"
+              value={formData.service}
+              onChange={(e) => setFormData(prev => ({ ...prev, service: e.target.value }))}
+            />
             <Textarea
               label="How can I help?"
               name="message"
@@ -101,7 +179,7 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
             />
             <div className="flex gap-3">
               <Button type="submit" disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                {isSubmitting ? 'Saving...' : 'Send Message'}
               </Button>
               <Button
                 type="button"
@@ -115,6 +193,11 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
           </form>
         ) : (
           <div className="space-y-4">
+            {submitStatus && (
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+                {submitStatus}
+              </div>
+            )}
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <h3 className="font-medium text-green-800 mb-2">AI Analysis Complete</h3>
               <div className="space-y-2 text-sm text-green-700">
@@ -130,7 +213,7 @@ export function SmartIntakeForm({ onSubmitSuccess }: SmartIntakeFormProps) {
             </div>
             <div className="flex gap-3">
               <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1">
-                {isSubmitting ? 'Sending...' : 'Send This'}
+                {isSubmitting ? 'Saving...' : 'Send This'}
               </Button>
               <Button variant="outline" onClick={() => setShowSummary(false)}>
                 Edit Message

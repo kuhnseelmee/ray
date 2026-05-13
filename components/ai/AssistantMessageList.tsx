@@ -5,9 +5,10 @@ import { ChatMessage } from '@/lib/ai/types'
 interface AssistantMessageListProps {
   messages: ChatMessage[]
   isLoading: boolean
+  assistantName: string
 }
 
-export function AssistantMessageList({ messages, isLoading }: AssistantMessageListProps) {
+export function AssistantMessageList({ messages, isLoading, assistantName }: AssistantMessageListProps) {
   return (
     <div className="space-y-4">
       {messages.map((message, index) => (
@@ -35,7 +36,7 @@ export function AssistantMessageList({ messages, isLoading }: AssistantMessageLi
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-xs text-gray-500">Frank is typing...</span>
+              <span className="text-xs text-gray-500">{assistantName} is typing...</span>
             </div>
           </div>
         </div>

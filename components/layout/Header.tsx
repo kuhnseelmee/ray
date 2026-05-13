@@ -13,19 +13,36 @@ const navLinks = [
   { href: '/contact', label: 'Contact' },
 ]
 
-export function Header() {
+type HeaderProps = {
+  brandText?: string
+  logoUrl?: string
+  theme?: 'light' | 'dark'
+}
+
+export function Header({ brandText = 'Ray', logoUrl = '', theme = 'light' }: HeaderProps) {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
+  const isDark = theme === 'dark'
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="text-xl font-bold text-dark">
-            Ray
+    <header
+      className={`fixed left-0 right-0 top-0 z-50 border-b backdrop-blur-md ${
+        isDark ? 'border-gray-800 bg-gray-950/95 text-white' : 'border-gray-100 bg-white/95'
+      }`}
+    >
+      <nav className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          <Link href="/" className={`text-xl font-bold ${isDark ? 'text-white' : 'text-dark'}`}>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={brandText} className="h-8 w-auto" />
+            ) : (
+              brandText
+            )}
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -33,7 +50,9 @@ export function Header() {
                 className={`text-sm font-medium transition-colors ${
                   pathname === link.href
                     ? 'text-primary'
-                    : 'text-gray-600 hover:text-dark'
+                    : isDark
+                      ? 'text-gray-300 hover:text-white'
+                      : 'text-gray-600 hover:text-dark'
                 }`}
               >
                 {link.label}
@@ -41,23 +60,18 @@ export function Header() {
             ))}
             <Link
               href="/contact"
-              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
             >
               Get in Touch
             </Link>
           </div>
 
           <button
-            className="md:hidden p-2"
+            className="p-2 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen ? (
                 <path
                   strokeLinecap="round"
@@ -78,7 +92,7 @@ export function Header() {
         </div>
 
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
+          <div className={`border-t py-4 md:hidden ${isDark ? 'border-gray-800' : 'border-gray-100'}`}>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -86,7 +100,9 @@ export function Header() {
                 className={`block py-2 text-sm font-medium ${
                   pathname === link.href
                     ? 'text-primary'
-                    : 'text-gray-600'
+                    : isDark
+                      ? 'text-gray-300'
+                      : 'text-gray-600'
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -95,7 +111,7 @@ export function Header() {
             ))}
             <Link
               href="/contact"
-              className="block mt-4 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg text-center"
+              className="mt-4 block rounded-lg bg-primary px-4 py-2 text-center text-sm font-medium text-white"
               onClick={() => setIsMenuOpen(false)}
             >
               Get in Touch

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { services } from '@/data/services'
+import { ACCROICalculator } from '@/components/ACCROICalculator'
 import { ServiceCard } from '@/components/ServiceCard'
 
 export const metadata: Metadata = {
@@ -64,6 +65,25 @@ export default function Services() {
               <ServiceCard key={service.id} service={service} showRelatedProjects />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ROI Calculator Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mb-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary mb-3">
+              NDIS specific
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
+              ACC ROI Calculator for NDIS Providers
+            </h2>
+            <p className="text-lg text-gray-600">
+              Use the calculator below to estimate whether improving workflow, compliance handling, or scheduling could pay back through reduced admin time, fewer missed shifts, and lower incident risk.
+            </p>
+          </div>
+
+          <ACCROICalculator />
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
+import { getSiteSettings } from '@/lib/site-settings'
 
 const services = [
   {
@@ -48,7 +49,9 @@ const whyWorkWithMe = [
   },
 ]
 
-export default function Home() {
+export default async function Home() {
+  const siteSettings = await getSiteSettings()
+
   return (
     <div className="bg-light">
       <section className="relative overflow-hidden bg-gradient-to-br from-white to-blue-50 py-24">
@@ -62,9 +65,9 @@ export default function Home() {
               digital solutions without unnecessary complexity.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/contact">
+              <Link href={siteSettings.heroCtaHref || '/contact'}>
                 <Button size="lg" className="w-full sm:w-auto">
-                  Book a consultation
+                  {siteSettings.heroCtaLabel || 'Book a consultation'}
                 </Button>
               </Link>
               <Link href="/services">

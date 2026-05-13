@@ -1,12 +1,15 @@
 import type { Metadata } from 'next'
 import { SmartIntakeForm } from '@/components/ai/SmartIntakeForm'
+import { getSiteSettings } from '@/lib/site-settings'
 
 export const metadata: Metadata = {
   title: 'Contact | Ray',
   description: 'Get in touch for consultations, project inquiries, or technical help.',
 }
 
-export default function Contact() {
+export default async function Contact() {
+  const siteSettings = await getSiteSettings()
+
   return (
     <div className="bg-light">
       <section className="py-16 bg-white">
@@ -39,15 +42,30 @@ export default function Contact() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div>
               <h3 className="font-medium text-dark mb-2">Email</h3>
-              <a href="mailto:hello@ray.dev" className="text-primary hover:underline text-sm">
-                hello@ray.dev
+              <a
+                href={`mailto:${siteSettings.contactEmail}`}
+                className="text-primary hover:underline text-sm"
+              >
+                {siteSettings.contactEmail}
               </a>
             </div>
             <div>
               <h3 className="font-medium text-dark mb-2">Location</h3>
-              <p className="text-gray-600 text-sm">Available remotely & local area</p>
+              <p className="text-gray-600 text-sm">
+                {siteSettings.locationLabel || 'Available remotely & local area'}
+              </p>
             </div>
             <div>
+              <h3 className="font-medium text-dark mb-2">Phone</h3>
+              {siteSettings.contactPhone ? (
+                <a href={`tel:${siteSettings.contactPhone}`} className="text-primary hover:underline text-sm">
+                  {siteSettings.contactPhone}
+                </a>
+              ) : (
+                <p className="text-gray-600 text-sm">Provided on request</p>
+              )}
+            </div>
+            <div className="md:col-span-3">
               <h3 className="font-medium text-dark mb-2">Response time</h3>
               <p className="text-gray-600 text-sm">Usually within 24-48 hours</p>
             </div>

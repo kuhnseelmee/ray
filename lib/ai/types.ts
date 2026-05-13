@@ -16,6 +16,9 @@ export interface ChatResponse {
   suggestions?: string[];
   recommendedServiceSlugs?: string[];
   shouldShowContactCta?: boolean;
+  debug?: {
+    path: 'full-prompt' | 'compact-retry' | 'ollama-fallback' | 'offline-fallback';
+  };
 }
 
 export interface IntakeRequest {
